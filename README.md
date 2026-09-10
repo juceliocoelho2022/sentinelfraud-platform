@@ -24,7 +24,7 @@ O **SentinelFraud Platform** é uma solução backend para avaliação de transa
 
 O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consistência, rastreabilidade, baixa latência, proteção contra duplicidade, processamento assíncrono e evolução cloud-native.
 
-> **Versão atual: v0.2.0** — motor de regras, PostgreSQL, eventos Kafka e Velocity Check atômico com Redis.
+> **Versão atual: v0.3.0** — motor de regras, Velocity Check e publicação confiável de eventos com Transactional Outbox.
 
 ## Destaques técnicos
 
@@ -37,6 +37,7 @@ O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consi
 - SHA-256 nos identificadores usados nas chaves do Redis.
 - PostgreSQL com versionamento de schema pelo Flyway.
 - Eventos de decisão publicados no Apache Kafka.
+- Transactional Outbox com claim concorrente, retry exponencial e estado `DEAD`.
 - Health checks, métricas Prometheus e graceful shutdown.
 - Testes com JUnit 5, Mockito, AssertJ e JaCoCo.
 - CI com GitHub Actions e ambiente completo via Docker Compose.
@@ -53,8 +54,9 @@ flowchart TD
     E --> G["Velocity check"]
     G --> H["Redis"]
     E --> I["Risk score and decision"]
-    I --> J["PostgreSQL"]
-    I --> K["Kafka event"]
+    I --> J["PostgreSQL + Outbox"]
+    J --> K["Outbox relay"]
+    K --> L["Kafka event"]
     I --> D
 ```
 
@@ -66,7 +68,8 @@ flowchart TD
 4. Caso seja nova, as regras são avaliadas em ordem.
 5. As pontuações são somadas e limitadas a 100.
 6. A decisão e seus motivos são persistidos.
-7. Um evento é publicado em `fraud.assessment.completed.v1`.
+7. O evento é gravado na Outbox dentro da mesma transação.
+8. O relay publica o evento em `fraud.assessment.completed.v1`.
 
 ## Motor de regras
 
@@ -95,6 +98,7 @@ Cada regra implementa `FraudRule`. Novas estratégias podem ser adicionadas sem 
 | Persistência | Spring Data JPA, Hibernate, PostgreSQL 17 |
 | Tempo real | Redis 7.4, Sorted Sets, Lua |
 | Mensageria | Apache Kafka 3.9 |
+| Confiabilidade | Transactional Outbox, retry e `SKIP LOCKED` |
 | Banco | Flyway |
 | Observabilidade | Actuator, Micrometer, Prometheus |
 | Qualidade | JUnit 5, Mockito, AssertJ, JaCoCo |
@@ -216,6 +220,27 @@ O `transactionId` é o membro do Sorted Set, evitando contagem duplicada. Os ide
 | `VELOCITY_THRESHOLD` | `5` | Quantidade que ativa a regra |
 | `VELOCITY_SCORE` | `35` | Score adicionado por regra |
 
+## Transactional Outbox
+
+A decisão e o evento são persistidos na mesma transação PostgreSQL. Isso evita o cenário em que a decisão é salva, mas o Kafka fica indisponível antes da publicação.
+
+O relay processa eventos em lotes e utiliza `FOR UPDATE SKIP LOCKED`, permitindo múltiplas instâncias sem publicar o mesmo registro simultaneamente. Cada tentativa possui:
+
+- estado `PENDING`, `PROCESSING`, `PUBLISHED` ou `DEAD`;
+- contador de tentativas;
+- timeout de envio;
+- backoff exponencial limitado a 60 segundos;
+- recuperação de claims abandonados;
+- registro do último erro;
+- métricas de publicação e falha.
+
+| Variável | Padrão | Descrição |
+|---|---:|---|
+| `OUTBOX_FIXED_DELAY` | `1000` | Intervalo do relay em milissegundos |
+| `OUTBOX_BATCH_SIZE` | `50` | Eventos reclamados por ciclo |
+| `OUTBOX_MAX_ATTEMPTS` | `8` | Tentativas antes do estado `DEAD` |
+| `OUTBOX_SEND_TIMEOUT` | `PT5S` | Timeout de publicação no Kafka |
+
 ## Testes e qualidade
 
 Com Java 21 e Maven 3.9 ou superior:
@@ -243,6 +268,7 @@ sentinelfraud-platform/
 │   ├── config/              # OpenAPI
 │   ├── domain/              # Domínio
 │   ├── persistence/         # JPA e PostgreSQL
+│   ├── outbox/              # Relay, claim e estados da Outbox
 │   ├── rules/               # Regras antifraude
 │   ├── service/             # Orquestração
 │   └── velocity/            # Contadores Redis
@@ -271,9 +297,9 @@ Cada regra retorna score e motivo. A decisão pode ser auditada, analisada e con
 
 O Redis mantém somente os eventos das janelas de velocidade. TTL evita crescimento indefinido e SHA-256 reduz a exposição dos identificadores.
 
-### Publicação assíncrona
+### Publicação assíncrona confiável
 
-O Kafka desacopla a decisão de alertas, investigação e analytics. A publicação direta é uma limitação conhecida; o Transactional Outbox está planejado para eliminar o risco de dual-write.
+O Kafka desacopla a decisão de alertas, investigação e analytics. O Transactional Outbox elimina o dual-write entre banco e broker, mantendo o evento recuperável até sua publicação.
 
 ## Roadmap cloud-native
 
@@ -281,7 +307,8 @@ O Kafka desacopla a decisão de alertas, investigação e analytics. A publicaç
 - [x] PostgreSQL, Flyway e idempotência.
 - [x] Eventos com Kafka.
 - [x] Velocity Check atômico com Redis.
-- [ ] Transactional Outbox, retry e Dead Letter Topic.
+- [x] Transactional Outbox com retry e estado `DEAD`.
+- [ ] Dead Letter Topic e operação de replay.
 - [ ] Device Intelligence com timeout, circuit breaker e fallback.
 - [ ] OAuth2/JWT, mTLS e gestão de segredos.
 - [ ] OpenTelemetry, traces correlacionados e SLO de latência p95.
@@ -292,7 +319,7 @@ O Kafka desacopla a decisão de alertas, investigação e analytics. A publicaç
 
 ## Limitações conhecidas
 
-- A publicação Kafka ainda não utiliza Transactional Outbox.
+- A Outbox garante entrega pelo menos uma vez; consumidores devem ser idempotentes.
 - As regras ainda não possuem painel administrativo.
 - Autenticação e autorização serão adicionadas antes de uma exposição pública.
 - O projeto é demonstrativo e não processa dados financeiros reais.

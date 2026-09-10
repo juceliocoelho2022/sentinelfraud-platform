@@ -37,5 +37,8 @@ services:
       VELOCITY_WINDOW: PT1M
       VELOCITY_THRESHOLD: 5
       VELOCITY_SCORE: 35
+      OUTBOX_FIXED_DELAY: 1000
+      OUTBOX_BATCH_SIZE: 50
+      OUTBOX_MAX_ATTEMPTS: 8
     ports: ["8080:8080"]
 volumes: { postgres_data: {} }

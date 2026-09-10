@@ -6,7 +6,6 @@ import br.com.jucelio.sentinelfraud.persistence.*;
 import br.com.jucelio.sentinelfraud.rules.*;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.*;
@@ -16,12 +15,12 @@ import java.util.*;
 public class FraudDecisionService {
     private final List<FraudRule> rules;
     private final FraudAssessmentRepository repository;
-    private final KafkaTemplate<String, Object> kafka;
+    private final OutboxService outbox;
     private final MeterRegistry metrics;
 
     public FraudDecisionService(List<FraudRule> rules, FraudAssessmentRepository repository,
-                                KafkaTemplate<String,Object> kafka, MeterRegistry metrics) {
-        this.rules=List.copyOf(rules); this.repository=repository; this.kafka=kafka; this.metrics=metrics;
+                                OutboxService outbox, MeterRegistry metrics) {
+        this.rules=List.copyOf(rules); this.repository=repository; this.outbox=outbox; this.metrics=metrics;
     }
 
     @Transactional
@@ -41,7 +40,7 @@ public class FraudDecisionService {
         try { repository.saveAndFlush(entity); }
         catch (DataIntegrityViolationException ex) { return repository.findByTransactionId(tx.transactionId()).map(this::response).orElseThrow(() -> ex); }
         metrics.counter("fraud.decisions", "decision", decision.name()).increment();
-        kafka.send("fraud.assessment.completed.v1", tx.transactionId(), response(entity));
+        outbox.enqueue("fraud.assessment.completed.v1", tx.transactionId(), response(entity));
         return response(entity);
     }
 
