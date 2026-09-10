@@ -24,7 +24,7 @@ O **SentinelFraud Platform** é uma solução backend para avaliação de transa
 
 O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consistência, rastreabilidade, baixa latência, proteção contra duplicidade, processamento assíncrono e evolução cloud-native.
 
-> **Versão atual: v0.5.0** — consumo idempotente, retry, Dead Letter Topic e replay operacional via Outbox.
+> **Versão atual: v0.5.1** — consumo idempotente, retry, Dead Letter Topic e replay operacional via Outbox.
 
 ## Destaques técnicos
 
@@ -266,7 +266,7 @@ Métricas relevantes ficam disponíveis em `/actuator/prometheus`, incluindo `fr
 
 ## Dead Letter Topic e replay
 
-O consumidor processa `fraud.assessment.completed.v1` com idempotência no PostgreSQL. Depois de três tentativas sem sucesso, o `DefaultErrorHandler` e o `DeadLetterPublishingRecoverer` encaminham o evento para `fraud.assessment.completed.v1.DLT`.
+O consumidor processa `fraud.assessment.completed.v1` com idempotência no PostgreSQL. Depois de três tentativas sem sucesso, o `DefaultErrorHandler` e o `DeadLetterPublishingRecoverer` encaminham o evento para `fraud.assessment.completed.v1-dlt`.
 
 A DLT é persistida em `dead_letter_events`, permitindo inspeção e replay controlado. O replay não publica diretamente no broker: ele utiliza a Transactional Outbox e o tópico `fraud.assessment.completed.v1.replay`, mantendo consistência entre a mudança de estado e a solicitação de reprocessamento.
 

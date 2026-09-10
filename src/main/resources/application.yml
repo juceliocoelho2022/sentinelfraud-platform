@@ -69,7 +69,7 @@ resilience4j:
 kafka:
   topics:
     fraud-decisions: fraud.assessment.completed.v1
-    fraud-decisions-dlt: fraud.assessment.completed.v1.DLT
+    fraud-decisions-dlt: fraud.assessment.completed.v1-dlt
     fraud-decisions-replay: fraud.assessment.completed.v1.replay
   consumer:
     retry-attempts: ${KAFKA_RETRY_ATTEMPTS:3}
