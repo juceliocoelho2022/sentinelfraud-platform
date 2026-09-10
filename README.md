@@ -16,6 +16,8 @@
 
 </div>
 
+![Arquitetura da plataforma SentinelFraud](docs/images/sentinelfraud-platform-architecture.png)
+
 ---
 
 ## Visão geral
