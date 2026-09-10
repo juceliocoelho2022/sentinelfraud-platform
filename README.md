@@ -24,7 +24,7 @@ O **SentinelFraud Platform** é uma solução backend para avaliação de transa
 
 O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consistência, rastreabilidade, baixa latência, proteção contra duplicidade, processamento assíncrono e evolução cloud-native.
 
-> **Versão atual: v0.4.0** — Device Intelligence resiliente, Velocity Check e publicação confiável com Transactional Outbox.
+> **Versão atual: v0.5.0** — consumo idempotente, retry, Dead Letter Topic e replay operacional via Outbox.
 
 ## Destaques técnicos
 
@@ -39,6 +39,7 @@ O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consi
 - Eventos de decisão publicados no Apache Kafka.
 - Transactional Outbox com claim concorrente, retry exponencial e estado `DEAD`.
 - Device Intelligence via HTTP com timeout, retry, circuit breaker e fallback conservador.
+- Consumidor Kafka idempotente com retry, DLT persistida e replay operacional.
 - Health checks, métricas Prometheus e graceful shutdown.
 - Testes com JUnit 5, Mockito, AssertJ e JaCoCo.
 - CI com GitHub Actions e ambiente completo via Docker Compose.
@@ -60,6 +61,8 @@ flowchart TD
     I --> J["PostgreSQL + Outbox"]
     J --> K["Outbox relay"]
     K --> L["Kafka event"]
+    L --> O["Idempotent consumer"]
+    O --> P["Processed or DLT"]
     I --> D
 ```
 
@@ -261,6 +264,19 @@ O fallback é conservador: mantém a API disponível, marca `DEVICE_INTELLIGENCE
 
 Métricas relevantes ficam disponíveis em `/actuator/prometheus`, incluindo `fraud_device_intelligence_total` e as métricas do circuit breaker.
 
+## Dead Letter Topic e replay
+
+O consumidor processa `fraud.assessment.completed.v1` com idempotência no PostgreSQL. Depois de três tentativas sem sucesso, o `DefaultErrorHandler` e o `DeadLetterPublishingRecoverer` encaminham o evento para `fraud.assessment.completed.v1.DLT`.
+
+A DLT é persistida em `dead_letter_events`, permitindo inspeção e replay controlado. O replay não publica diretamente no broker: ele utiliza a Transactional Outbox e o tópico `fraud.assessment.completed.v1.replay`, mantendo consistência entre a mudança de estado e a solicitação de reprocessamento.
+
+| Operação | Endpoint |
+|---|---|
+| Listar falhas | `GET /api/v1/admin/dead-letters` |
+| Solicitar replay | `POST /api/v1/admin/dead-letters/{id}/replay` |
+
+Para demonstrar o fluxo, use um `transactionId` iniciado por `tx-force-dlt-`. A falha ocorre somente no tópico original; o consumidor de replay processa o mesmo evento com sucesso. Chamadas repetidas ao endpoint não publicam o replay novamente.
+
 ## Testes e qualidade
 
 Com Java 21 e Maven 3.9 ou superior:
@@ -287,6 +303,7 @@ sentinelfraud-platform/
 │   ├── api/                 # Controllers, contratos e erros
 │   ├── config/              # OpenAPI
 │   ├── device/              # Device Intelligence e resiliência
+│   ├── kafka/               # Consumer, idempotência e DLT
 │   ├── domain/              # Domínio
 │   ├── persistence/         # JPA e PostgreSQL
 │   ├── outbox/              # Relay, claim e estados da Outbox
@@ -330,7 +347,7 @@ O Kafka desacopla a decisão de alertas, investigação e analytics. O Transacti
 - [x] Velocity Check atômico com Redis.
 - [x] Transactional Outbox com retry e estado `DEAD`.
 - [x] Device Intelligence com timeout, retry, circuit breaker e fallback.
-- [ ] Dead Letter Topic e operação de replay.
+- [x] Dead Letter Topic, consumidor idempotente e replay operacional.
 - [ ] Testes de integração com WireMock e Testcontainers.
 - [ ] OAuth2/JWT, mTLS e gestão de segredos.
 - [ ] OpenTelemetry, traces correlacionados e SLO de latência p95.

@@ -41,5 +41,8 @@ services:
       OUTBOX_BATCH_SIZE: 50
       OUTBOX_MAX_ATTEMPTS: 8
       DEVICE_INTELLIGENCE_BASE_URL: http://app:8080
+      KAFKA_CONSUMER_GROUP: sentinelfraud-investigation-v1
+      KAFKA_RETRY_ATTEMPTS: 3
+      KAFKA_RETRY_BACKOFF: 500
     ports: ["8080:8080"]
 volumes: { postgres_data: {} }

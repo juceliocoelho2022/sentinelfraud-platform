@@ -1,6 +1,27 @@
 ### Health
 GET http://localhost:8080/actuator/health
 
+### Forçar envio para a DLT
+POST http://localhost:8080/api/v1/fraud-assessments
+Content-Type: application/json
+
+{
+  "transactionId": "tx-force-dlt-001",
+  "customerId": "customer-dlt",
+  "amount": 100.00,
+  "currency": "BRL",
+  "deviceId": "device-known",
+  "ipAddress": "203.0.113.80",
+  "country": "BR",
+  "occurredAt": "2026-09-10T12:00:00Z"
+}
+
+### Listar eventos da DLT
+GET http://localhost:8080/api/v1/admin/dead-letters
+
+### Reprocessar evento substituindo o UUID
+POST http://localhost:8080/api/v1/admin/dead-letters/00000000-0000-0000-0000-000000000000/replay
+
 ### Device Intelligence: alto risco
 POST http://localhost:8080/api/v1/fraud-assessments
 Content-Type: application/json

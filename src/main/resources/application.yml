@@ -10,6 +10,11 @@ spring:
     hibernate.ddl-auto: validate
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP:sentinelfraud-investigation-v1}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -60,3 +65,12 @@ resilience4j:
         wait-duration-in-open-state: 10s
         permitted-number-of-calls-in-half-open-state: 2
         register-health-indicator: true
+
+kafka:
+  topics:
+    fraud-decisions: fraud.assessment.completed.v1
+    fraud-decisions-dlt: fraud.assessment.completed.v1.DLT
+    fraud-decisions-replay: fraud.assessment.completed.v1.replay
+  consumer:
+    retry-attempts: ${KAFKA_RETRY_ATTEMPTS:3}
+    retry-backoff: ${KAFKA_RETRY_BACKOFF:500}
