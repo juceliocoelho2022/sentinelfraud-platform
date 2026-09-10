@@ -23,4 +23,10 @@ management:
 server:
   shutdown: graceful
   error.include-message: never
-fraud.rules.high-amount-threshold: ${HIGH_AMOUNT_THRESHOLD:10000}
+fraud:
+  rules:
+    high-amount-threshold: ${HIGH_AMOUNT_THRESHOLD:10000}
+    velocity:
+      window: ${VELOCITY_WINDOW:PT1M}
+      threshold: ${VELOCITY_THRESHOLD:5}
+      score: ${VELOCITY_SCORE:35}

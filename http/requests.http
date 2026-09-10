@@ -18,3 +18,21 @@ Content-Type: application/json
 
 ### Retrieve decision
 GET http://localhost:8080/api/v1/fraud-assessments/tx-demo-001
+
+### Velocity check
+# Envie cinco requisições em menos de um minuto, mudando transactionId para
+# tx-velocity-001, 002, 003, 004 e 005. Mantenha customerId, deviceId e
+# ipAddress iguais. A quinta requisição ativa FR004, FR005 e FR006.
+POST http://localhost:8080/api/v1/fraud-assessments
+Content-Type: application/json
+
+{
+  "transactionId": "tx-velocity-001",
+  "customerId": "customer-velocity",
+  "amount": 100.00,
+  "currency": "BRL",
+  "deviceId": "device-velocity",
+  "ipAddress": "203.0.113.99",
+  "country": "BR",
+  "occurredAt": "2026-09-10T12:00:00Z"
+}

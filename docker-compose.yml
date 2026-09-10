@@ -34,5 +34,8 @@ services:
       DB_PASSWORD: sentinel
       REDIS_HOST: redis
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      VELOCITY_WINDOW: PT1M
+      VELOCITY_THRESHOLD: 5
+      VELOCITY_SCORE: 35
     ports: ["8080:8080"]
 volumes: { postgres_data: {} }
