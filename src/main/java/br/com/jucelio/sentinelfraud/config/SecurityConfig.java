@@ -77,7 +77,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    RSAKey rsaKey() throws Exception {
+    public RSAKey rsaKey() throws Exception {
         var generator = KeyPairGenerator.getInstance("RSA");
         generator.initialize(2048);
         var pair = generator.generateKeyPair();
@@ -86,12 +86,12 @@ public class SecurityConfig {
     }
 
     @Bean
-    JwtEncoder jwtEncoder(RSAKey rsaKey) {
+    public JwtEncoder jwtEncoder(RSAKey rsaKey) {
         return new NimbusJwtEncoder(new ImmutableJWKSet<>(new JWKSet(rsaKey)));
     }
 
     @Bean
-    JwtDecoder jwtDecoder(RSAKey rsaKey, @Value("${security.jwt.issuer}") String issuer) throws Exception {
+    public JwtDecoder jwtDecoder(RSAKey rsaKey, @Value("${security.jwt.issuer}") String issuer) throws Exception {
         var decoder = NimbusJwtDecoder.withPublicKey(rsaKey.toRSAPublicKey()).build();
         decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(issuer));
         return decoder;
