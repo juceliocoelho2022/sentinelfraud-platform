@@ -17,7 +17,7 @@
 </div>
 
 <p align="center">
-  <img src="docs/images/sentinelfraud-platform-architecture.png" alt="Arquitetura da plataforma SentinelFraud" width="100%">
+  <img src="docs/images/sentinelfraud-platform-architecture.jpg" alt="Arquitetura da plataforma SentinelFraud" width="100%">
 </p>
 
 ---
