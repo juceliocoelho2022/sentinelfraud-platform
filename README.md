@@ -45,17 +45,17 @@ O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consi
 
 ```mermaid
 flowchart TD
-    C[Cliente ou parceiro] --> API[Fraud Assessment API]
-    API --> ID{Transação processada?}
-    ID -->|Sim| RES[Resposta idempotente]
-    ID -->|Não| ENG[Motor de regras]
-    ENG --> STATIC[Regras estáticas]
-    ENG --> VEL[Velocity Check]
-    VEL --> REDIS[(Redis)]
-    ENG --> SCORE[Score e decisão]
-    SCORE --> PG[(PostgreSQL)]
-    SCORE --> KAFKA[(Kafka)]
-    SCORE --> RES
+    A["Transaction"] --> B["REST API"]
+    B --> C{"Already processed?"}
+    C -->|Yes| D["Idempotent response"]
+    C -->|No| E["Fraud rules engine"]
+    E --> F["Static rules"]
+    E --> G["Velocity check"]
+    G --> H["Redis"]
+    E --> I["Risk score and decision"]
+    I --> J["PostgreSQL"]
+    I --> K["Kafka event"]
+    I --> D
 ```
 
 ### Fluxo de decisão
