@@ -16,7 +16,9 @@
 
 </div>
 
-![Arquitetura da plataforma SentinelFraud](docs/images/sentinelfraud-platform-architecture.png)
+<p align="center">
+  <img src="docs/images/sentinelfraud-platform-architecture.png" alt="Arquitetura da plataforma SentinelFraud" width="100%">
+</p>
 
 ---
 
