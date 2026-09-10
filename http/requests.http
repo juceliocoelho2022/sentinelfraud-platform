@@ -1,0 +1,20 @@
+### Health
+GET http://localhost:8080/actuator/health
+
+### Block: high amount + foreign country = score 70
+POST http://localhost:8080/api/v1/fraud-assessments
+Content-Type: application/json
+
+{
+  "transactionId": "tx-demo-001",
+  "customerId": "customer-42",
+  "amount": 15000.00,
+  "currency": "BRL",
+  "deviceId": "device-a1b2",
+  "ipAddress": "203.0.113.15",
+  "country": "US",
+  "occurredAt": "2026-09-09T02:30:00Z"
+}
+
+### Retrieve decision
+GET http://localhost:8080/api/v1/fraud-assessments/tx-demo-001
