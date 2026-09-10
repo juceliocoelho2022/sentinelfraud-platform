@@ -40,5 +40,6 @@ services:
       OUTBOX_FIXED_DELAY: 1000
       OUTBOX_BATCH_SIZE: 50
       OUTBOX_MAX_ATTEMPTS: 8
+      DEVICE_INTELLIGENCE_BASE_URL: http://app:8080
     ports: ["8080:8080"]
 volumes: { postgres_data: {} }

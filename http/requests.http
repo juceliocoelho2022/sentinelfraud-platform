@@ -1,6 +1,36 @@
 ### Health
 GET http://localhost:8080/actuator/health
 
+### Device Intelligence: alto risco
+POST http://localhost:8080/api/v1/fraud-assessments
+Content-Type: application/json
+
+{
+  "transactionId": "tx-device-risk-001",
+  "customerId": "customer-device-risk",
+  "amount": 100.00,
+  "currency": "BRL",
+  "deviceId": "risk-emulator-001",
+  "ipAddress": "203.0.113.70",
+  "country": "BR",
+  "occurredAt": "2026-09-10T12:00:00Z"
+}
+
+### Device Intelligence: timeout com fallback
+POST http://localhost:8080/api/v1/fraud-assessments
+Content-Type: application/json
+
+{
+  "transactionId": "tx-device-timeout-001",
+  "customerId": "customer-device-timeout",
+  "amount": 100.00,
+  "currency": "BRL",
+  "deviceId": "slow-provider-001",
+  "ipAddress": "203.0.113.71",
+  "country": "BR",
+  "occurredAt": "2026-09-10T12:00:00Z"
+}
+
 ### Block: high amount + foreign country = score 70
 POST http://localhost:8080/api/v1/fraud-assessments
 Content-Type: application/json

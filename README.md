@@ -24,7 +24,7 @@ O **SentinelFraud Platform** é uma solução backend para avaliação de transa
 
 O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consistência, rastreabilidade, baixa latência, proteção contra duplicidade, processamento assíncrono e evolução cloud-native.
 
-> **Versão atual: v0.3.0** — motor de regras, Velocity Check e publicação confiável de eventos com Transactional Outbox.
+> **Versão atual: v0.4.0** — Device Intelligence resiliente, Velocity Check e publicação confiável com Transactional Outbox.
 
 ## Destaques técnicos
 
@@ -38,6 +38,7 @@ O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consi
 - PostgreSQL com versionamento de schema pelo Flyway.
 - Eventos de decisão publicados no Apache Kafka.
 - Transactional Outbox com claim concorrente, retry exponencial e estado `DEAD`.
+- Device Intelligence via HTTP com timeout, retry, circuit breaker e fallback conservador.
 - Health checks, métricas Prometheus e graceful shutdown.
 - Testes com JUnit 5, Mockito, AssertJ e JaCoCo.
 - CI com GitHub Actions e ambiente completo via Docker Compose.
@@ -53,6 +54,8 @@ flowchart TD
     E --> F["Static rules"]
     E --> G["Velocity check"]
     G --> H["Redis"]
+    E --> M["Device intelligence"]
+    M --> N["Resilience4j"]
     E --> I["Risk score and decision"]
     I --> J["PostgreSQL + Outbox"]
     J --> K["Outbox relay"]
@@ -81,6 +84,7 @@ flowchart TD
 | `FR004` | Velocidade por cliente | 5 ou mais transações em 1 minuto | 35 |
 | `FR005` | Velocidade por dispositivo | 5 ou mais transações em 1 minuto | 35 |
 | `FR006` | Velocidade por IP | 5 ou mais transações em 1 minuto | 35 |
+| `FR007` | Device Intelligence | Dispositivo médio / alto risco | 30 / 60 |
 
 | Score | Decisão | Significado |
 |---:|:---:|---|
@@ -98,7 +102,7 @@ Cada regra implementa `FraudRule`. Novas estratégias podem ser adicionadas sem 
 | Persistência | Spring Data JPA, Hibernate, PostgreSQL 17 |
 | Tempo real | Redis 7.4, Sorted Sets, Lua |
 | Mensageria | Apache Kafka 3.9 |
-| Confiabilidade | Transactional Outbox, retry e `SKIP LOCKED` |
+| Confiabilidade | Resilience4j, Transactional Outbox, retry e `SKIP LOCKED` |
 | Banco | Flyway |
 | Observabilidade | Actuator, Micrometer, Prometheus |
 | Qualidade | JUnit 5, Mockito, AssertJ, JaCoCo |
@@ -241,6 +245,22 @@ O relay processa eventos em lotes e utiliza `FOR UPDATE SKIP LOCKED`, permitindo
 | `OUTBOX_MAX_ATTEMPTS` | `8` | Tentativas antes do estado `DEAD` |
 | `OUTBOX_SEND_TIMEOUT` | `PT5S` | Timeout de publicação no Kafka |
 
+## Device Intelligence resiliente
+
+A regra `FR007` consulta um fornecedor simulado antes de concluir o score. A integração usa Resilience4j para impedir que lentidão ou indisponibilidade externa derrube a análise antifraude.
+
+| Prefixo do `deviceId` | Cenário simulado | Resultado |
+|---|---|---|
+| `device-` | Dispositivo conhecido | Baixo risco, score 0 |
+| `review-` | Dispositivo novo | Médio risco, score 30 |
+| `risk-` | Root, emulador ou IP divergente | Alto risco, score 60 |
+| `slow-` | Fornecedor lento | Timeout e fallback, score 15 |
+| `error-` | Fornecedor indisponível | Retry e fallback, score 15 |
+
+O fallback é conservador: mantém a API disponível, marca `DEVICE_INTELLIGENCE_UNAVAILABLE` e adiciona risco moderado para tornar a degradação visível e auditável.
+
+Métricas relevantes ficam disponíveis em `/actuator/prometheus`, incluindo `fraud_device_intelligence_total` e as métricas do circuit breaker.
+
 ## Testes e qualidade
 
 Com Java 21 e Maven 3.9 ou superior:
@@ -266,6 +286,7 @@ sentinelfraud-platform/
 ├── src/main/java/br/com/jucelio/sentinelfraud/
 │   ├── api/                 # Controllers, contratos e erros
 │   ├── config/              # OpenAPI
+│   ├── device/              # Device Intelligence e resiliência
 │   ├── domain/              # Domínio
 │   ├── persistence/         # JPA e PostgreSQL
 │   ├── outbox/              # Relay, claim e estados da Outbox
@@ -308,8 +329,9 @@ O Kafka desacopla a decisão de alertas, investigação e analytics. O Transacti
 - [x] Eventos com Kafka.
 - [x] Velocity Check atômico com Redis.
 - [x] Transactional Outbox com retry e estado `DEAD`.
+- [x] Device Intelligence com timeout, retry, circuit breaker e fallback.
 - [ ] Dead Letter Topic e operação de replay.
-- [ ] Device Intelligence com timeout, circuit breaker e fallback.
+- [ ] Testes de integração com WireMock e Testcontainers.
 - [ ] OAuth2/JWT, mTLS e gestão de segredos.
 - [ ] OpenTelemetry, traces correlacionados e SLO de latência p95.
 - [ ] Feature flags, shadow mode e champion/challenger.
