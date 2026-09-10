@@ -1,9 +1,32 @@
 ### Health
 GET http://localhost:8080/actuator/health
 
+### Token do analista
+POST http://localhost:8080/api/v1/auth/token
+Content-Type: application/json
+
+{
+  "username": "analyst",
+  "password": "analyst-demo"
+}
+
+> {% client.global.set("analystToken", response.body.accessToken); %}
+
+### Token do administrador
+POST http://localhost:8080/api/v1/auth/token
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin-demo"
+}
+
+> {% client.global.set("adminToken", response.body.accessToken); %}
+
 ### Forçar envio para a DLT
 POST http://localhost:8080/api/v1/fraud-assessments
 Content-Type: application/json
+Authorization: Bearer {{analystToken}}
 
 {
   "transactionId": "tx-force-dlt-001",
@@ -18,13 +41,16 @@ Content-Type: application/json
 
 ### Listar eventos da DLT
 GET http://localhost:8080/api/v1/admin/dead-letters
+Authorization: Bearer {{adminToken}}
 
 ### Reprocessar evento substituindo o UUID
 POST http://localhost:8080/api/v1/admin/dead-letters/00000000-0000-0000-0000-000000000000/replay
+Authorization: Bearer {{adminToken}}
 
 ### Device Intelligence: alto risco
 POST http://localhost:8080/api/v1/fraud-assessments
 Content-Type: application/json
+Authorization: Bearer {{analystToken}}
 
 {
   "transactionId": "tx-device-risk-001",
@@ -40,6 +66,7 @@ Content-Type: application/json
 ### Device Intelligence: timeout com fallback
 POST http://localhost:8080/api/v1/fraud-assessments
 Content-Type: application/json
+Authorization: Bearer {{analystToken}}
 
 {
   "transactionId": "tx-device-timeout-001",
@@ -55,6 +82,7 @@ Content-Type: application/json
 ### Block: high amount + foreign country = score 70
 POST http://localhost:8080/api/v1/fraud-assessments
 Content-Type: application/json
+Authorization: Bearer {{analystToken}}
 
 {
   "transactionId": "tx-demo-001",
@@ -69,6 +97,7 @@ Content-Type: application/json
 
 ### Retrieve decision
 GET http://localhost:8080/api/v1/fraud-assessments/tx-demo-001
+Authorization: Bearer {{analystToken}}
 
 ### Velocity check
 # Envie cinco requisições em menos de um minuto, mudando transactionId para
@@ -76,6 +105,7 @@ GET http://localhost:8080/api/v1/fraud-assessments/tx-demo-001
 # ipAddress iguais. A quinta requisição ativa FR004, FR005 e FR006.
 POST http://localhost:8080/api/v1/fraud-assessments
 Content-Type: application/json
+Authorization: Bearer {{analystToken}}
 
 {
   "transactionId": "tx-velocity-001",

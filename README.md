@@ -28,7 +28,7 @@ O **SentinelFraud Platform** é uma solução backend para avaliação de transa
 
 O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consistência, rastreabilidade, baixa latência, proteção contra duplicidade, processamento assíncrono e evolução cloud-native.
 
-> **Versão atual: v0.5.1** — consumo idempotente, retry, Dead Letter Topic e replay operacional via Outbox.
+> **Versão atual: v0.6.0** — autenticação JWT RS256 e controle de acesso por papéis, além do fluxo resiliente de eventos.
 
 ## Destaques técnicos
 
@@ -44,6 +44,7 @@ O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consi
 - Transactional Outbox com claim concorrente, retry exponencial e estado `DEAD`.
 - Device Intelligence via HTTP com timeout, retry, circuit breaker e fallback conservador.
 - Consumidor Kafka idempotente com retry, DLT persistida e replay operacional.
+- API protegida com JWT RS256 e autorização baseada nos papéis `ANALYST` e `ADMIN`.
 - Health checks, métricas Prometheus e graceful shutdown.
 - Testes com JUnit 5, Mockito, AssertJ e JaCoCo.
 - CI com GitHub Actions e ambiente completo via Docker Compose.
@@ -52,7 +53,7 @@ O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consi
 
 ```mermaid
 flowchart TD
-    A["Transaction"] --> B["REST API"]
+    A["Client + JWT"] --> B["REST API"]
     B --> C{"Already processed?"}
     C -->|Yes| D["Idempotent response"]
     C -->|No| E["Fraud rules engine"]
@@ -106,6 +107,7 @@ Cada regra implementa `FraudRule`. Novas estratégias podem ser adicionadas sem 
 | Área | Tecnologias |
 |---|---|
 | Backend | Java 21, Spring Boot 3.5, Spring Web |
+| Segurança | Spring Security, OAuth2 Resource Server, JWT RS256 e RBAC |
 | Persistência | Spring Data JPA, Hibernate, PostgreSQL 17 |
 | Tempo real | Redis 7.4, Sorted Sets, Lua |
 | Mensageria | Apache Kafka 3.9 |
@@ -149,7 +151,34 @@ curl http://localhost:8080/actuator/health
 | Swagger UI | http://localhost:8080/swagger-ui.html |
 | OpenAPI | http://localhost:8080/v3/api-docs |
 | Health | http://localhost:8080/actuator/health |
-| Prometheus | http://localhost:8080/actuator/prometheus |
+| Prometheus | http://localhost:8080/actuator/prometheus (`ADMIN`) |
+
+## Autenticação e autorização
+
+A API opera sem sessão e valida JWTs assinados com RSA. Para facilitar a demonstração local, há dois usuários em memória; as senhas podem e devem ser substituídas por variáveis de ambiente.
+
+| Usuário local | Senha local | Papel | Acesso |
+|---|---|---|---|
+| `analyst` | `analyst-demo` | `ANALYST` | Criar e consultar avaliações |
+| `admin` | `admin-demo` | `ADMIN` | Avaliações, DLT/replay e métricas administrativas |
+
+Gere um token no PowerShell:
+
+```powershell
+$credentials = @{
+    username = "analyst"
+    password = "analyst-demo"
+} | ConvertTo-Json
+
+$auth = Invoke-RestMethod -Method POST `
+    -Uri "http://localhost:8080/api/v1/auth/token" `
+    -ContentType "application/json" `
+    -Body $credentials
+
+$token = $auth.accessToken
+```
+
+No Swagger UI, clique em **Authorize** e informe somente o token. O prefixo `Bearer` é aplicado automaticamente.
 
 ## Exemplo de uso
 
@@ -158,6 +187,7 @@ curl http://localhost:8080/actuator/health
 ```http
 POST /api/v1/fraud-assessments
 Content-Type: application/json
+Authorization: Bearer <token>
 ```
 
 ```json
@@ -203,6 +233,7 @@ $body = @{
 Invoke-RestMethod -Method POST `
     -Uri "http://localhost:8080/api/v1/fraud-assessments" `
     -ContentType "application/json" `
+    -Headers @{ Authorization = "Bearer $token" } `
     -Body $body
 ```
 
@@ -305,7 +336,7 @@ sentinelfraud-platform/
 ├── http/                    # Requisições de exemplo
 ├── src/main/java/br/com/jucelio/sentinelfraud/
 │   ├── api/                 # Controllers, contratos e erros
-│   ├── config/              # OpenAPI
+│   ├── config/              # Segurança e OpenAPI
 │   ├── device/              # Device Intelligence e resiliência
 │   ├── kafka/               # Consumer, idempotência e DLT
 │   ├── domain/              # Domínio
@@ -352,8 +383,9 @@ O Kafka desacopla a decisão de alertas, investigação e analytics. O Transacti
 - [x] Transactional Outbox com retry e estado `DEAD`.
 - [x] Device Intelligence com timeout, retry, circuit breaker e fallback.
 - [x] Dead Letter Topic, consumidor idempotente e replay operacional.
+- [x] OAuth2 Resource Server, JWT RS256 e RBAC.
 - [ ] Testes de integração com WireMock e Testcontainers.
-- [ ] OAuth2/JWT, mTLS e gestão de segredos.
+- [ ] IdP externo, mTLS e gestão de segredos.
 - [ ] OpenTelemetry, traces correlacionados e SLO de latência p95.
 - [ ] Feature flags, shadow mode e champion/challenger.
 - [ ] Modelo de ML versionado e monitoramento de drift.
@@ -364,7 +396,7 @@ O Kafka desacopla a decisão de alertas, investigação e analytics. O Transacti
 
 - A Outbox garante entrega pelo menos uma vez; consumidores devem ser idempotentes.
 - As regras ainda não possuem painel administrativo.
-- Autenticação e autorização serão adicionadas antes de uma exposição pública.
+- Os usuários em memória e a chave RSA gerada a cada inicialização são adequados somente à demonstração local; produção exige IdP externo e gestão segura de chaves.
 - O projeto é demonstrativo e não processa dados financeiros reais.
 
 ## Autor

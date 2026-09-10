@@ -44,5 +44,9 @@ services:
       KAFKA_CONSUMER_GROUP: sentinelfraud-investigation-v1
       KAFKA_RETRY_ATTEMPTS: 3
       KAFKA_RETRY_BACKOFF: 500
+      ANALYST_USERNAME: analyst
+      ANALYST_PASSWORD: analyst-demo
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: admin-demo
     ports: ["8080:8080"]
 volumes: { postgres_data: {} }

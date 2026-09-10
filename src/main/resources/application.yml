@@ -74,3 +74,15 @@ kafka:
   consumer:
     retry-attempts: ${KAFKA_RETRY_ATTEMPTS:3}
     retry-backoff: ${KAFKA_RETRY_BACKOFF:500}
+
+security:
+  jwt:
+    issuer: sentinelfraud-platform
+    ttl: ${JWT_TTL:PT1H}
+  demo-users:
+    analyst:
+      username: ${ANALYST_USERNAME:analyst}
+      password: ${ANALYST_PASSWORD:analyst-demo}
+    admin:
+      username: ${ADMIN_USERNAME:admin}
+      password: ${ADMIN_PASSWORD:admin-demo}
