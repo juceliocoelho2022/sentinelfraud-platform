@@ -28,7 +28,7 @@ O **SentinelFraud Platform** é uma solução backend para avaliação de transa
 
 O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consistência, rastreabilidade, baixa latência, proteção contra duplicidade, processamento assíncrono e evolução cloud-native.
 
-> **Versão atual: v0.7.1** — dashboard operacional Grafana provisionado, tracing distribuído e SLO de latência.
+> **Versão atual: v0.7.2** — dashboard operacional com contadores exatos, tracing distribuído e SLO de latência.
 
 ## Destaques técnicos
 

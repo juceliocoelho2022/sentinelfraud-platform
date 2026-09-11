@@ -76,7 +76,7 @@
       "gridPos": {"h": 8, "w": 8, "x": 0, "y": 13},
       "id": 7,
       "options": {"displayLabels": ["name", "percent"], "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "values": ["value", "percent"]}, "pieType": "donut", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "tooltip": {"mode": "single", "sort": "none"}},
-      "targets": [{"expr": "sum(increase(fraud_decisions_total{application=\"sentinelfraud-platform\"}[$__range])) by (decision)", "instant": true, "legendFormat": "{{decision}}", "refId": "A"}],
+      "targets": [{"expr": "sum(fraud_decisions_total{application=\"sentinelfraud-platform\"}) by (decision)", "instant": true, "legendFormat": "{{decision}}", "refId": "A"}],
       "title": "Decisões antifraude",
       "type": "piechart"
     },
@@ -116,7 +116,7 @@
       "gridPos": {"h": 8, "w": 8, "x": 16, "y": 21},
       "id": 11,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"expr": "sum(increase(fraud_idempotency_hit_total{application=\"sentinelfraud-platform\"}[$__range]))", "instant": true, "legendFormat": "reaproveitadas", "refId": "A"}],
+      "targets": [{"expr": "sum(fraud_idempotency_hit_total{application=\"sentinelfraud-platform\"})", "instant": true, "legendFormat": "reaproveitadas", "refId": "A"}],
       "title": "Respostas idempotentes",
       "type": "stat"
     }
