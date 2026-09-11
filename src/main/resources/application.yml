@@ -92,7 +92,7 @@ kafka:
 
 security:
   jwt:
-    issuer: sentinelfraud-platform
+    issuer: ${JWT_ISSUER:https://sentinelfraud.local}
     ttl: ${JWT_TTL:PT1H}
   demo-users:
     analyst:

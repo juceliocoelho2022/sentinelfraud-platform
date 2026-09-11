@@ -131,6 +131,7 @@ A métrica `fraud_challenger_comparison_total` expõe combinações de decisão 
 
 | Variável | Padrão | Finalidade |
 |---|---|---|
+| `JWT_ISSUER` | `https://sentinelfraud.local` | Identificador URI do emissor dos tokens locais |
 | `CHALLENGER_ENABLED` | `false` | Ativa a avaliação sombra |
 | `CHALLENGER_VERSION` | `challenger-v1` | Identifica a política experimental |
 | `CHALLENGER_REVIEW_THRESHOLD` | `35` | Score mínimo para revisão |
