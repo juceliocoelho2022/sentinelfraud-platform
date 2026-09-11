@@ -478,21 +478,31 @@ O Kafka desacopla a decisão de alertas, investigação e analytics. O Transacti
 
 ## Roadmap cloud-native
 
-- [x] API e motor extensível de regras.
-- [x] PostgreSQL, Flyway e idempotência.
-- [x] Eventos com Kafka.
-- [x] Velocity Check atômico com Redis.
-- [x] Transactional Outbox com retry e estado `DEAD`.
+### Entregue na v1.0.0
+
+- [x] API REST e motor extensível de regras antifraude.
+- [x] PostgreSQL, migrations Flyway e idempotência por transação.
+- [x] Eventos de domínio com Apache Kafka.
+- [x] Velocity Check atômico com Redis, Sorted Sets e Lua.
+- [x] Transactional Outbox com claim concorrente, retry e estado `DEAD`.
 - [x] Device Intelligence com timeout, retry, circuit breaker e fallback.
-- [x] Dead Letter Topic, consumidor idempotente e replay operacional.
+- [x] Consumidor Kafka idempotente, Dead Letter Topic e replay operacional.
 - [x] OAuth2 Resource Server, JWT RS256 e RBAC.
-- [x] OpenTelemetry, traces correlacionados e SLO de latência p95.
-- [ ] Testes de integração com WireMock e Testcontainers.
-- [ ] IdP externo, mTLS e gestão de segredos.
-- [ ] Feature flags, shadow mode e champion/challenger.
-- [ ] Modelo de ML versionado e monitoramento de drift.
-- [ ] AWS: API Gateway, ECS/EKS, MSK/SQS, ElastiCache, RDS/DynamoDB e S3.
-- [ ] Terraform, autoscaling, blue/green deployment e FinOps.
+- [x] OpenTelemetry, traces correlacionados, Prometheus, Grafana e SLO p95.
+- [x] Testes unitários e integração PostgreSQL com Testcontainers.
+- [x] Feature flags, shadow mode, champion/challenger e rollout canário.
+- [x] Architecture Decision Records e pipeline de CI com quality gate JaCoCo.
+
+### Próximas evoluções
+
+- [ ] Testes de contrato e integrações HTTP com WireMock.
+- [ ] IdP externo, rotação de chaves, mTLS e gestão de segredos.
+- [ ] Modelo de machine learning versionado, explainability e monitoramento de drift.
+- [ ] AWS com API Gateway, ECS/EKS, MSK/SQS, ElastiCache, RDS/DynamoDB e S3.
+- [ ] Infraestrutura como código com Terraform.
+- [ ] Autoscaling, blue/green deployment, disaster recovery e FinOps.
+
+> O roadmap futuro representa evolução arquitetural planejada. A v1.0.0 já constitui uma versão funcional, executável e validada pelo CI.
 
 ## Limitações conhecidas
 
