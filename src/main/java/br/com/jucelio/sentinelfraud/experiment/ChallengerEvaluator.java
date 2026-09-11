@@ -16,14 +16,19 @@ public class ChallengerEvaluator {
     private final String version;
     private final int reviewThreshold;
     private final int blockThreshold;
+    private final int rolloutPercentage;
 
     public ChallengerEvaluator(ShadowEvaluationRepository repository, MeterRegistry metrics,
             @Value("${fraud.experiments.challenger.enabled:false}") boolean enabled,
             @Value("${fraud.experiments.challenger.version:challenger-v1}") String version,
             @Value("${fraud.experiments.challenger.review-threshold:35}") int reviewThreshold,
-            @Value("${fraud.experiments.challenger.block-threshold:65}") int blockThreshold) {
+            @Value("${fraud.experiments.challenger.block-threshold:65}") int blockThreshold,
+            @Value("${fraud.experiments.challenger.rollout-percentage:0}") int rolloutPercentage) {
         if (reviewThreshold < 0 || blockThreshold > 100 || reviewThreshold >= blockThreshold) {
             throw new IllegalArgumentException("Challenger thresholds must satisfy 0 <= review < block <= 100");
+        }
+        if (rolloutPercentage < 0 || rolloutPercentage > 100) {
+            throw new IllegalArgumentException("Challenger rollout percentage must be between 0 and 100");
         }
         this.repository = repository;
         this.metrics = metrics;
@@ -31,28 +36,40 @@ public class ChallengerEvaluator {
         this.version = version;
         this.reviewThreshold = reviewThreshold;
         this.blockThreshold = blockThreshold;
+        this.rolloutPercentage = rolloutPercentage;
     }
 
-    public void evaluate(String transactionId, int riskScore, Decision championDecision) {
-        if (!enabled) return;
+    public Decision evaluate(String transactionId, int riskScore, Decision championDecision) {
+        if (!enabled) return championDecision;
 
         Decision challengerDecision = decide(riskScore);
+        int rolloutBucket = Math.floorMod(transactionId.hashCode(), 100);
+        boolean promoted = rolloutBucket < rolloutPercentage;
+        Decision effectiveDecision = promoted ? challengerDecision : championDecision;
         boolean diverged = challengerDecision != championDecision;
+
         repository.save(ShadowEvaluationEntity.builder()
                 .id(UUID.randomUUID())
                 .transactionId(transactionId)
                 .experimentVersion(version)
                 .championDecision(championDecision)
                 .challengerDecision(challengerDecision)
+                .effectiveDecision(effectiveDecision)
                 .riskScore(riskScore)
+                .rolloutBucket(rolloutBucket)
+                .promoted(promoted)
                 .diverged(diverged)
                 .evaluatedAt(Instant.now())
                 .build());
+
         metrics.counter("fraud.challenger.comparison",
                 "version", version,
                 "champion", championDecision.name(),
                 "challenger", challengerDecision.name(),
-                "diverged", Boolean.toString(diverged)).increment();
+                "effective", effectiveDecision.name(),
+                "diverged", Boolean.toString(diverged),
+                "promoted", Boolean.toString(promoted)).increment();
+        return effectiveDecision;
     }
 
     private Decision decide(int score) {

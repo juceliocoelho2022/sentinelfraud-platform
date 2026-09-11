@@ -51,6 +51,7 @@ fraud:
       version: ${CHALLENGER_VERSION:challenger-v1}
       review-threshold: ${CHALLENGER_REVIEW_THRESHOLD:35}
       block-threshold: ${CHALLENGER_BLOCK_THRESHOLD:65}
+      rollout-percentage: ${CHALLENGER_ROLLOUT_PERCENTAGE:0}
   device-intelligence:
     base-url: ${DEVICE_INTELLIGENCE_BASE_URL:http://localhost:8080}
     connect-timeout: ${DEVICE_INTELLIGENCE_CONNECT_TIMEOUT:PT0.3S}

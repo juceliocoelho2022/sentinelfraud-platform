@@ -28,7 +28,7 @@ O **SentinelFraud Platform** é uma solução backend para avaliação de transa
 
 O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consistência, rastreabilidade, baixa latência, proteção contra duplicidade, processamento assíncrono e evolução cloud-native.
 
-> **Versão atual: v0.8.0** — experimentação segura com feature flag e champion/challenger em modo sombra.
+> **Versão atual: v0.9.0** — rollout canário determinístico do challenger com auditoria e rollback imediato.
 
 ## Destaques técnicos
 
@@ -45,6 +45,7 @@ O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consi
 - Device Intelligence via HTTP com timeout, retry, circuit breaker e fallback conservador.
 - Consumidor Kafka idempotente com retry, DLT persistida e replay operacional.
 - Champion/challenger em modo sombra, persistência auditável e métrica de divergência.
+- Rollout canário determinístico por `transactionId`, com promoção percentual e rollback imediato.
 - API protegida com JWT RS256 e autorização baseada nos papéis `ANALYST` e `ADMIN`.
 - Traces distribuídos com propagação de contexto em HTTP e Kafka.
 - Métricas de latência com histogramas, p95 e limites explícitos de SLO.
@@ -133,8 +134,32 @@ A métrica `fraud_challenger_comparison_total` expõe combinações de decisão 
 | `CHALLENGER_VERSION` | `challenger-v1` | Identifica a política experimental |
 | `CHALLENGER_REVIEW_THRESHOLD` | `35` | Score mínimo para revisão |
 | `CHALLENGER_BLOCK_THRESHOLD` | `65` | Score mínimo para bloqueio |
+| `CHALLENGER_ROLLOUT_PERCENTAGE` | `0` | Percentual promovido para a decisão challenger |
 
 O Docker Compose ativa o experimento para demonstração local. Em produção, ele deve começar desativado e ser habilitado progressivamente.
+
+## Rollout canário determinístico
+
+Quando `CHALLENGER_ROLLOUT_PERCENTAGE` é maior que zero, a plataforma calcula um bucket estável de `0` a `99` a partir da `transactionId`. A decisão challenger torna-se efetiva somente quando o bucket está dentro do percentual configurado.
+
+- `0`: somente shadow mode; o champion continua efetivo.
+- `10`: aproximadamente 10% das novas transações usam a decisão challenger.
+- `100`: todas as novas transações usam o challenger.
+- Rollback: retornar o valor para `0` e recriar apenas o container da aplicação.
+
+A auditoria registra `rolloutBucket`, `promoted` e `effectiveDecision`. Retries da mesma transação continuam retornando a decisão já persistida, preservando a idempotência.
+
+```powershell
+$env:CHALLENGER_ROLLOUT_PERCENTAGE = "10"
+docker compose up --build -d app
+```
+
+Rollback imediato:
+
+```powershell
+$env:CHALLENGER_ROLLOUT_PERCENTAGE = "0"
+docker compose up --build -d app
+```
 
 ## Stack
 

@@ -20,7 +20,8 @@ public class ExperimentAdminController {
     public List<ShadowEvaluationResponse> list() {
         return repository.findTop100ByOrderByEvaluatedAtDesc().stream()
                 .map(e -> new ShadowEvaluationResponse(e.getId(), e.getTransactionId(), e.getExperimentVersion(),
-                        e.getChampionDecision(), e.getChallengerDecision(), e.getRiskScore(),
+                        e.getChampionDecision(), e.getChallengerDecision(), e.getEffectiveDecision(),
+                        e.getRiskScore(), e.getRolloutBucket(), e.isPromoted(),
                         e.isDiverged(), e.getEvaluatedAt()))
                 .toList();
     }

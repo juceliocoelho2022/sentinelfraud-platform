@@ -21,6 +21,7 @@ class FraudDecisionServiceTest {
     @BeforeEach void setup() {
         when(repository.findByTransactionId(anyString())).thenReturn(Optional.empty());
         when(repository.saveAndFlush(any())).thenAnswer(i->i.getArgument(0));
+        when(challenger.evaluate(anyString(),anyInt(),any())).thenAnswer(i->i.getArgument(2));
         service=new FraudDecisionService(List.of(new HighAmountRule(new BigDecimal("10000")),new ForeignTransactionRule()),repository,outbox,new SimpleMeterRegistry(),challenger);
     }
     @Test void shouldBlockCombinedRisk() {

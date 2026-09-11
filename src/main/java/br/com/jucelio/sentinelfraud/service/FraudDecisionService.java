@@ -35,15 +35,15 @@ public class FraudDecisionService {
                 request.country().toUpperCase(),request.occurredAt());
         var results=rules.stream().map(rule -> rule.evaluate(tx)).filter(RuleResult::matched).toList();
         int score=Math.min(100,results.stream().mapToInt(RuleResult::score).sum());
-        Decision decision=score>=70?Decision.BLOCK:score>=40?Decision.REVIEW:Decision.APPROVE;
+        Decision championDecision=score>=70?Decision.BLOCK:score>=40?Decision.REVIEW:Decision.APPROVE;
+        Decision effectiveDecision=challenger.evaluate(tx.transactionId(), score, championDecision);
         var entity=FraudAssessmentEntity.builder().id(UUID.randomUUID()).transactionId(tx.transactionId())
-                .customerId(tx.customerId()).decision(decision).riskScore(score)
+                .customerId(tx.customerId()).decision(effectiveDecision).riskScore(score)
                 .reasonCodes(results.stream().map(RuleResult::reason).reduce((a,b)->a+","+b).orElse("NONE"))
                 .assessedAt(Instant.now()).build();
         try { repository.saveAndFlush(entity); }
         catch (DataIntegrityViolationException ex) { return repository.findByTransactionId(tx.transactionId()).map(this::response).orElseThrow(() -> ex); }
-        metrics.counter("fraud.decisions", "decision", decision.name()).increment();
-        challenger.evaluate(tx.transactionId(), score, decision);
+        metrics.counter("fraud.decisions", "decision", effectiveDecision.name()).increment();
         outbox.enqueue("fraud.assessment.completed.v1", tx.transactionId(), response(entity));
         return response(entity);
     }

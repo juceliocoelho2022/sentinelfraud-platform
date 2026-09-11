@@ -18,7 +18,10 @@ public class ShadowEvaluationEntity {
     @Column(name = "experiment_version", nullable = false) private String experimentVersion;
     @Enumerated(EnumType.STRING) @Column(name = "champion_decision", nullable = false) private Decision championDecision;
     @Enumerated(EnumType.STRING) @Column(name = "challenger_decision", nullable = false) private Decision challengerDecision;
+    @Enumerated(EnumType.STRING) @Column(name = "effective_decision", nullable = false) private Decision effectiveDecision;
     @Column(name = "risk_score", nullable = false) private int riskScore;
+    @Column(name = "rollout_bucket", nullable = false) private int rolloutBucket;
+    @Column(nullable = false) private boolean promoted;
     @Column(nullable = false) private boolean diverged;
     @Column(name = "evaluated_at", nullable = false) private Instant evaluatedAt;
 }

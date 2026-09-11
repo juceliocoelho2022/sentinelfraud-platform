@@ -6,5 +6,5 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record ShadowEvaluationResponse(UUID id, String transactionId, String experimentVersion,
-        Decision championDecision, Decision challengerDecision, int riskScore,
-        boolean diverged, Instant evaluatedAt) { }
+        Decision championDecision, Decision challengerDecision, Decision effectiveDecision,
+        int riskScore, int rolloutBucket, boolean promoted, boolean diverged, Instant evaluatedAt) { }
