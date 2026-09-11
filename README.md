@@ -28,7 +28,7 @@ O **SentinelFraud Platform** é uma solução backend para avaliação de transa
 
 O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consistência, rastreabilidade, baixa latência, proteção contra duplicidade, processamento assíncrono e evolução cloud-native.
 
-> **Versão atual: v0.9.0** — rollout canário determinístico do challenger com auditoria e rollback imediato.
+> **Versão estável: v1.0.0** — arquitetura antifraude auditável, resiliente, observável e validada com testes de integração reais.
 
 ## Destaques técnicos
 
@@ -50,7 +50,8 @@ O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consi
 - Traces distribuídos com propagação de contexto em HTTP e Kafka.
 - Métricas de latência com histogramas, p95 e limites explícitos de SLO.
 - Health checks, métricas Prometheus e graceful shutdown.
-- Testes com JUnit 5, Mockito, AssertJ e JaCoCo.
+- Testes unitários e de integração com JUnit 5, Mockito, AssertJ, Testcontainers e JaCoCo.
+- Architecture Decision Records (ADRs) documentando decisões e trade-offs técnicos.
 - CI com GitHub Actions e ambiente completo via Docker Compose.
 
 ## Arquitetura
@@ -161,6 +162,25 @@ $env:CHALLENGER_ROLLOUT_PERCENTAGE = "0"
 docker compose up --build -d app
 ```
 
+## Qualidade e decisões arquiteturais
+
+A suíte de integração inicializa PostgreSQL 17 em um container descartável, aplica todas as migrations Flyway e valida a persistência das avaliações oficiais e experimentais. Dessa forma, o CI verifica o comportamento contra o mesmo banco utilizado pela aplicação, sem mocks na camada de persistência.
+
+As decisões mais importantes estão registradas em [`docs/adr`](docs/adr):
+
+- ADR-001 — adoção de monólito modular.
+- ADR-002 — publicação confiável com Transactional Outbox.
+- ADR-003 — velocity check atômico com Redis e Lua.
+- ADR-004 — experimentação champion/challenger e rollout determinístico.
+
+Execute toda a verificação:
+
+```bash
+mvn clean verify
+```
+
+O build falha se os testes não passarem ou se a cobertura de linhas ficar abaixo de 70%.
+
 ## Stack
 
 | Área | Tecnologias |
@@ -174,7 +194,7 @@ docker compose up --build -d app
 | Banco | Flyway |
 | Observabilidade | Actuator, Micrometer, Prometheus |
 | Tracing e visualização | OpenTelemetry, OTLP, Tempo e Grafana |
-| Qualidade | JUnit 5, Mockito, AssertJ, JaCoCo |
+| Qualidade | JUnit 5, Mockito, AssertJ, Testcontainers, JaCoCo e ADRs |
 | Infraestrutura | Docker, Docker Compose |
 | CI/CD | GitHub Actions |
 | Contrato | OpenAPI, Swagger UI |
