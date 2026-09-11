@@ -28,7 +28,7 @@ O **SentinelFraud Platform** é uma solução backend para avaliação de transa
 
 O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consistência, rastreabilidade, baixa latência, proteção contra duplicidade, processamento assíncrono e evolução cloud-native.
 
-> **Versão atual: v0.7.0** — observabilidade distribuída com OpenTelemetry, Tempo, Prometheus, Grafana e SLO de latência.
+> **Versão atual: v0.7.1** — dashboard operacional Grafana provisionado, tracing distribuído e SLO de latência.
 
 ## Destaques técnicos
 
@@ -320,7 +320,7 @@ Para demonstrar o fluxo, use um `transactionId` iniciado por `tx-force-dlt-`. A 
 
 ## Observabilidade distribuída
 
-As requisições HTTP, chamadas ao Device Intelligence e operações Kafka são instrumentadas com Micrometer Tracing e OpenTelemetry. Os spans são enviados via OTLP ao OpenTelemetry Collector e armazenados no Tempo. O Prometheus coleta métricas da aplicação e o Grafana inicia com as duas fontes de dados provisionadas.
+As requisições HTTP, chamadas ao Device Intelligence e operações Kafka são instrumentadas com Micrometer Tracing e OpenTelemetry. Os spans são enviados via OTLP ao OpenTelemetry Collector e armazenados no Tempo. O Prometheus coleta métricas da aplicação e o Grafana inicia com as duas fontes de dados provisionadas. O dashboard **SentinelFraud Operations** é carregado automaticamente com p95, conformidade do SLO, throughput, erros HTTP, decisões, Outbox, Device Intelligence, Kafka e idempotência.
 
 O ambiente local usa amostragem de 100% para facilitar a demonstração. Em produção, ajuste `TRACING_SAMPLING_PROBABILITY` conforme volume, custo e criticidade.
 
