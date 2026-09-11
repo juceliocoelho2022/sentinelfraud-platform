@@ -51,6 +51,10 @@ services:
       ADMIN_PASSWORD: admin-demo
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318/v1/traces
       TRACING_SAMPLING_PROBABILITY: 1.0
+      CHALLENGER_ENABLED: "true"
+      CHALLENGER_VERSION: challenger-v1
+      CHALLENGER_REVIEW_THRESHOLD: 35
+      CHALLENGER_BLOCK_THRESHOLD: 65
     ports: ["8080:8080"]
 
   otel-collector:

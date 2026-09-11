@@ -45,6 +45,12 @@ fraud:
       window: ${VELOCITY_WINDOW:PT1M}
       threshold: ${VELOCITY_THRESHOLD:5}
       score: ${VELOCITY_SCORE:35}
+  experiments:
+    challenger:
+      enabled: ${CHALLENGER_ENABLED:false}
+      version: ${CHALLENGER_VERSION:challenger-v1}
+      review-threshold: ${CHALLENGER_REVIEW_THRESHOLD:35}
+      block-threshold: ${CHALLENGER_BLOCK_THRESHOLD:65}
   device-intelligence:
     base-url: ${DEVICE_INTELLIGENCE_BASE_URL:http://localhost:8080}
     connect-timeout: ${DEVICE_INTELLIGENCE_CONNECT_TIMEOUT:PT0.3S}

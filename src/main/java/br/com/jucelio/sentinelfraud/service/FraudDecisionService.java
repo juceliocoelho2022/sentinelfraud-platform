@@ -2,6 +2,7 @@ package br.com.jucelio.sentinelfraud.service;
 
 import br.com.jucelio.sentinelfraud.api.*;
 import br.com.jucelio.sentinelfraud.domain.*;
+import br.com.jucelio.sentinelfraud.experiment.ChallengerEvaluator;
 import br.com.jucelio.sentinelfraud.persistence.*;
 import br.com.jucelio.sentinelfraud.rules.*;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -17,10 +18,12 @@ public class FraudDecisionService {
     private final FraudAssessmentRepository repository;
     private final OutboxService outbox;
     private final MeterRegistry metrics;
+    private final ChallengerEvaluator challenger;
 
     public FraudDecisionService(List<FraudRule> rules, FraudAssessmentRepository repository,
-                                OutboxService outbox, MeterRegistry metrics) {
+                                OutboxService outbox, MeterRegistry metrics, ChallengerEvaluator challenger) {
         this.rules=List.copyOf(rules); this.repository=repository; this.outbox=outbox; this.metrics=metrics;
+        this.challenger=challenger;
     }
 
     @Transactional
@@ -40,6 +43,7 @@ public class FraudDecisionService {
         try { repository.saveAndFlush(entity); }
         catch (DataIntegrityViolationException ex) { return repository.findByTransactionId(tx.transactionId()).map(this::response).orElseThrow(() -> ex); }
         metrics.counter("fraud.decisions", "decision", decision.name()).increment();
+        challenger.evaluate(tx.transactionId(), score, decision);
         outbox.enqueue("fraud.assessment.completed.v1", tx.transactionId(), response(entity));
         return response(entity);
     }

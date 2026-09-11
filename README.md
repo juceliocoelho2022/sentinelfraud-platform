@@ -28,7 +28,7 @@ O **SentinelFraud Platform** é uma solução backend para avaliação de transa
 
 O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consistência, rastreabilidade, baixa latência, proteção contra duplicidade, processamento assíncrono e evolução cloud-native.
 
-> **Versão atual: v0.7.2** — dashboard operacional com contadores exatos, tracing distribuído e SLO de latência.
+> **Versão atual: v0.8.0** — experimentação segura com feature flag e champion/challenger em modo sombra.
 
 ## Destaques técnicos
 
@@ -44,6 +44,7 @@ O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consi
 - Transactional Outbox com claim concorrente, retry exponencial e estado `DEAD`.
 - Device Intelligence via HTTP com timeout, retry, circuit breaker e fallback conservador.
 - Consumidor Kafka idempotente com retry, DLT persistida e replay operacional.
+- Champion/challenger em modo sombra, persistência auditável e métrica de divergência.
 - API protegida com JWT RS256 e autorização baseada nos papéis `ANALYST` e `ADMIN`.
 - Traces distribuídos com propagação de contexto em HTTP e Kafka.
 - Métricas de latência com histogramas, p95 e limites explícitos de SLO.
@@ -66,6 +67,8 @@ flowchart TD
     M --> N["Resilience4j"]
     E --> I["Risk score and decision"]
     I --> J["PostgreSQL + Outbox"]
+    I --> Q["Shadow challenger"]
+    Q --> R["Audit + metrics"]
     J --> K["Outbox relay"]
     K --> L["Kafka event"]
     L --> O["Idempotent consumer"]
@@ -81,8 +84,10 @@ flowchart TD
 4. Caso seja nova, as regras são avaliadas em ordem.
 5. As pontuações são somadas e limitadas a 100.
 6. A decisão e seus motivos são persistidos.
-7. O evento é gravado na Outbox dentro da mesma transação.
-8. O relay publica o evento em `fraud.assessment.completed.v1`.
+7. Com a feature flag ativa, o challenger avalia o mesmo score sem alterar a resposta oficial.
+8. A comparação é persistida para auditoria e publicada como métrica.
+9. O evento oficial é gravado na Outbox dentro da mesma transação.
+10. O relay publica o evento em `fraud.assessment.completed.v1`.
 
 ## Motor de regras
 
@@ -103,6 +108,33 @@ flowchart TD
 | 70–100 | `BLOCK` | Risco alto; transação bloqueada |
 
 Cada regra implementa `FraudRule`. Novas estratégias podem ser adicionadas sem alterar o fluxo principal.
+
+## Champion/challenger em modo sombra
+
+A v0.8 permite testar uma nova política de decisão com segurança. O **champion** permanece responsável pela resposta da API e pelo evento oficial; o **challenger** apenas simula outra política sobre o mesmo score.
+
+| Política | `APPROVE` | `REVIEW` | `BLOCK` |
+|---|---:|---:|---:|
+| Champion oficial | 0–39 | 40–69 | 70–100 |
+| Challenger padrão | 0–34 | 35–64 | 65–100 |
+
+Cada avaliação sombra registra `transactionId`, versão, decisões, score, divergência e timestamp na tabela `fraud_shadow_evaluations`. O histórico exige papel `ADMIN`:
+
+```http
+GET /api/v1/admin/experiments/shadow-evaluations
+Authorization: Bearer <admin-token>
+```
+
+A métrica `fraud_challenger_comparison_total` expõe combinações de decisão e divergências no Prometheus/Grafana.
+
+| Variável | Padrão | Finalidade |
+|---|---|---|
+| `CHALLENGER_ENABLED` | `false` | Ativa a avaliação sombra |
+| `CHALLENGER_VERSION` | `challenger-v1` | Identifica a política experimental |
+| `CHALLENGER_REVIEW_THRESHOLD` | `35` | Score mínimo para revisão |
+| `CHALLENGER_BLOCK_THRESHOLD` | `65` | Score mínimo para bloqueio |
+
+O Docker Compose ativa o experimento para demonstração local. Em produção, ele deve começar desativado e ser habilitado progressivamente.
 
 ## Stack
 

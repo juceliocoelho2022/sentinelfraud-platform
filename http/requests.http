@@ -117,3 +117,23 @@ Authorization: Bearer {{analystToken}}
   "country": "BR",
   "occurredAt": "2026-09-10T12:00:00Z"
 }
+
+### Champion/challenger: score 65 gera divergência controlada
+POST http://localhost:8080/api/v1/fraud-assessments
+Authorization: Bearer {{analystToken}}
+Content-Type: application/json
+
+{
+  "transactionId": "tx-shadow-demo-001",
+  "customerId": "customer-shadow",
+  "amount": 15000.00,
+  "currency": "BRL",
+  "deviceId": "device-known",
+  "ipAddress": "203.0.113.90",
+  "country": "BR",
+  "occurredAt": "2026-09-11T02:30:00Z"
+}
+
+### Consultar avaliações sombra (ADMIN)
+GET http://localhost:8080/api/v1/admin/experiments/shadow-evaluations
+Authorization: Bearer {{adminToken}}
