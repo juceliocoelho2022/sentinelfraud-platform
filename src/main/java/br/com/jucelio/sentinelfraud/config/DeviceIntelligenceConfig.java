@@ -14,12 +14,13 @@ public class DeviceIntelligenceConfig {
 
     @Bean("deviceIntelligenceRestClient")
     RestClient deviceIntelligenceRestClient(
+            RestClient.Builder builder,
             @Value("${fraud.device-intelligence.base-url}") String baseUrl,
             @Value("${fraud.device-intelligence.connect-timeout}") Duration connectTimeout,
             @Value("${fraud.device-intelligence.read-timeout}") Duration readTimeout) {
         var httpClient = HttpClient.newBuilder().connectTimeout(connectTimeout).build();
         var requestFactory = new JdkClientHttpRequestFactory(httpClient);
         requestFactory.setReadTimeout(readTimeout);
-        return RestClient.builder().baseUrl(baseUrl).requestFactory(requestFactory).build();
+        return builder.baseUrl(baseUrl).requestFactory(requestFactory).build();
     }
 }

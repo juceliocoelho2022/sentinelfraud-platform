@@ -28,7 +28,7 @@ O **SentinelFraud Platform** é uma solução backend para avaliação de transa
 
 O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consistência, rastreabilidade, baixa latência, proteção contra duplicidade, processamento assíncrono e evolução cloud-native.
 
-> **Versão atual: v0.6.0** — autenticação JWT RS256 e controle de acesso por papéis, além do fluxo resiliente de eventos.
+> **Versão atual: v0.7.0** — observabilidade distribuída com OpenTelemetry, Tempo, Prometheus, Grafana e SLO de latência.
 
 ## Destaques técnicos
 
@@ -45,6 +45,8 @@ O projeto demonstra decisões aplicáveis a sistemas bancários críticos: consi
 - Device Intelligence via HTTP com timeout, retry, circuit breaker e fallback conservador.
 - Consumidor Kafka idempotente com retry, DLT persistida e replay operacional.
 - API protegida com JWT RS256 e autorização baseada nos papéis `ANALYST` e `ADMIN`.
+- Traces distribuídos com propagação de contexto em HTTP e Kafka.
+- Métricas de latência com histogramas, p95 e limites explícitos de SLO.
 - Health checks, métricas Prometheus e graceful shutdown.
 - Testes com JUnit 5, Mockito, AssertJ e JaCoCo.
 - CI com GitHub Actions e ambiente completo via Docker Compose.
@@ -114,6 +116,7 @@ Cada regra implementa `FraudRule`. Novas estratégias podem ser adicionadas sem 
 | Confiabilidade | Resilience4j, Transactional Outbox, retry e `SKIP LOCKED` |
 | Banco | Flyway |
 | Observabilidade | Actuator, Micrometer, Prometheus |
+| Tracing e visualização | OpenTelemetry, OTLP, Tempo e Grafana |
 | Qualidade | JUnit 5, Mockito, AssertJ, JaCoCo |
 | Infraestrutura | Docker, Docker Compose |
 | CI/CD | GitHub Actions |
@@ -151,7 +154,10 @@ curl http://localhost:8080/actuator/health
 | Swagger UI | http://localhost:8080/swagger-ui.html |
 | OpenAPI | http://localhost:8080/v3/api-docs |
 | Health | http://localhost:8080/actuator/health |
-| Prometheus | http://localhost:8080/actuator/prometheus (`ADMIN`) |
+| Prometheus da aplicação | http://localhost:8080/actuator/prometheus |
+| Prometheus UI | http://localhost:9090 |
+| Tempo API | http://localhost:3200 |
+| Grafana | http://localhost:3000 (`admin` / `admin-demo`) |
 
 ## Autenticação e autorização
 
@@ -312,6 +318,23 @@ A DLT é persistida em `dead_letter_events`, permitindo inspeção e replay cont
 
 Para demonstrar o fluxo, use um `transactionId` iniciado por `tx-force-dlt-`. A falha ocorre somente no tópico original; o consumidor de replay processa o mesmo evento com sucesso. Chamadas repetidas ao endpoint não publicam o replay novamente.
 
+## Observabilidade distribuída
+
+As requisições HTTP, chamadas ao Device Intelligence e operações Kafka são instrumentadas com Micrometer Tracing e OpenTelemetry. Os spans são enviados via OTLP ao OpenTelemetry Collector e armazenados no Tempo. O Prometheus coleta métricas da aplicação e o Grafana inicia com as duas fontes de dados provisionadas.
+
+O ambiente local usa amostragem de 100% para facilitar a demonstração. Em produção, ajuste `TRACING_SAMPLING_PROBABILITY` conforme volume, custo e criticidade.
+
+Para consultar a latência p95 no Prometheus ou Grafana:
+
+```promql
+histogram_quantile(
+  0.95,
+  sum(rate(http_server_requests_seconds_bucket{application="sentinelfraud-platform"}[5m])) by (le)
+)
+```
+
+Os buckets de SLO são `50 ms`, `100 ms`, `250 ms`, `500 ms`, `1 s` e `2 s`. Para localizar um trace, execute uma avaliação autenticada, abra **Grafana → Explore → Tempo** e pesquise pelo serviço `sentinelfraud-platform`. Os logs da aplicação incluem os identificadores de correlação do trace enquanto a requisição está em execução.
+
 ## Testes e qualidade
 
 Com Java 21 e Maven 3.9 ou superior:
@@ -334,6 +357,7 @@ O GitHub Actions executa a validação a cada `push` e `pull request` para a `ma
 sentinelfraud-platform/
 ├── .github/workflows/       # Integração contínua
 ├── http/                    # Requisições de exemplo
+├── observability/           # Collector, Tempo, Prometheus e Grafana
 ├── src/main/java/br/com/jucelio/sentinelfraud/
 │   ├── api/                 # Controllers, contratos e erros
 │   ├── config/              # Segurança e OpenAPI
@@ -384,9 +408,9 @@ O Kafka desacopla a decisão de alertas, investigação e analytics. O Transacti
 - [x] Device Intelligence com timeout, retry, circuit breaker e fallback.
 - [x] Dead Letter Topic, consumidor idempotente e replay operacional.
 - [x] OAuth2 Resource Server, JWT RS256 e RBAC.
+- [x] OpenTelemetry, traces correlacionados e SLO de latência p95.
 - [ ] Testes de integração com WireMock e Testcontainers.
 - [ ] IdP externo, mTLS e gestão de segredos.
-- [ ] OpenTelemetry, traces correlacionados e SLO de latência p95.
 - [ ] Feature flags, shadow mode e champion/challenger.
 - [ ] Modelo de ML versionado e monitoramento de drift.
 - [ ] AWS: API Gateway, ECS/EKS, MSK/SQS, ElastiCache, RDS/DynamoDB e S3.

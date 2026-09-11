@@ -42,10 +42,11 @@ public class SecurityConfig {
         return http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health/**", "/actuator/info", "/api/v1/auth/token",
+                        .requestMatchers("/actuator/health/**", "/actuator/info", "/actuator/prometheus",
+                                "/api/v1/auth/token",
                                 "/internal/device-intelligence/**", "/swagger-ui/**", "/swagger-ui.html",
                                 "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/v1/admin/**", "/actuator/prometheus", "/actuator/metrics/**")
+                        .requestMatchers("/api/v1/admin/**", "/actuator/metrics/**")
                                 .hasRole("ADMIN")
                         .requestMatchers("/api/v1/fraud-assessments/**").hasAnyRole("ANALYST", "ADMIN")
                         .anyRequest().authenticated())
