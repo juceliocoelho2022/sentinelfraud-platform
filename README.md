@@ -22,6 +22,25 @@
 
 ---
 
+## Technical Snapshot
+
+| Focus | Evidence in this project |
+|---|---|
+| Target roles | Java Backend Developer · Backend Engineer · Software Engineer |
+| Domain | Fraud Detection · Financial Systems · Real-Time Decisioning |
+| Backend | Java 21 · Spring Boot · REST API · Spring Security |
+| Messaging & consistency | Apache Kafka · Transactional Outbox · Idempotency · DLT · Replay |
+| Data | PostgreSQL · Redis |
+| Resilience & security | Resilience4j · JWT RS256 · RBAC |
+| Quality & observability | Testcontainers · JaCoCo · OpenTelemetry · Prometheus · Grafana |
+
+**Engineering highlights:** regras antifraude explicáveis, processamento idempotente, replay operacional de mensagens, resiliência de integrações e observabilidade distribuída com métricas e traces.
+
+**Keywords:** `Java Backend` `Spring Boot` `Fraud Detection` `Apache Kafka` `PostgreSQL` `Redis` `Transactional Outbox` `Resilience4j` `Testcontainers` `OpenTelemetry`
+
+---
+
+
 ## Visão geral
 
 O **SentinelFraud Platform** é uma solução backend para avaliação de transações financeiras em tempo real. A plataforma recebe uma transação, executa regras de risco, calcula um score auditável e retorna uma decisão: `APPROVE`, `REVIEW` ou `BLOCK`.
